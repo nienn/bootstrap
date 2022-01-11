@@ -9,13 +9,11 @@ import {
   defineJQueryPlugin,
   getElement,
   getElementFromSelector,
+  getDocument,
   getSelectorFromElement,
-  reflow,
-  typeCheckConfig,
-  getDocument
+  reflow
 } from './util/index'
 import EventHandler from './dom/event-handler'
-import Manipulator from './dom/manipulator'
 import SelectorEngine from './dom/selector-engine'
 import BaseComponent from './base-component'
 
@@ -63,10 +61,9 @@ const DefaultType = {
 
 class Collapse extends BaseComponent {
   constructor(element, config) {
-    super(element)
+    super(element, config)
 
     this._isTransitioning = false
-    this._config = this._getConfig(config)
     this._triggerArray = []
 
     const toggleList = SelectorEngine.find(SELECTOR_DATA_TOGGLE)
@@ -95,6 +92,10 @@ class Collapse extends BaseComponent {
   // Getters
   static get Default() {
     return Default
+  }
+
+  static get DefaultType() {
+    return DefaultType
   }
 
   static get NAME() {
@@ -211,15 +212,9 @@ class Collapse extends BaseComponent {
   }
 
   // Private
-  _getConfig(config) {
-    config = {
-      ...Default,
-      ...Manipulator.getDataAttributes(this._element),
-      ...config
-    }
+  _configAfterMerge(config) {
     config.toggle = Boolean(config.toggle) // Coerce string values
     config.parent = getElement(config.parent)
-    typeCheckConfig(NAME, config, DefaultType)
     return config
   }
 

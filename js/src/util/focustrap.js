@@ -7,7 +7,8 @@
 
 import EventHandler from '../dom/event-handler'
 import SelectorEngine from '../dom/selector-engine'
-import { getDocument, typeCheckConfig } from './index'
+import Config from './config'
+import { getDocument } from './index'
 
 /**
  * Constants
@@ -37,12 +38,26 @@ const DefaultType = {
  * Class definition
  */
 
-class FocusTrap {
+class FocusTrap extends Config {
   constructor(config) {
+    super()
     this._config = this._getConfig(config)
     this._isActive = false
     this._lastTabNavDirection = null
     this._document = getDocument()
+  }
+
+  // Getters
+  static get Default() {
+    return Default
+  }
+
+  static get DefaultType() {
+    return DefaultType
+  }
+
+  static get NAME() {
+    return NAME
   }
 
   // Public
@@ -99,15 +114,6 @@ class FocusTrap {
     }
 
     this._lastTabNavDirection = event.shiftKey ? TAB_NAV_BACKWARD : TAB_NAV_FORWARD
-  }
-
-  _getConfig(config) {
-    config = {
-      ...Default,
-      ...(typeof config === 'object' ? config : {})
-    }
-    typeCheckConfig(NAME, config, DefaultType)
-    return config
   }
 }
 

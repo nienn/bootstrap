@@ -7,18 +7,16 @@
 
 import {
   defineJQueryPlugin,
-  getElementFromSelector,
-  isDisabled,
-  isVisible,
-  typeCheckConfig,
   getDocument,
-  getWindow
+  getElementFromSelector,
+  getWindow,
+  isDisabled,
+  isVisible
 } from './util/index'
 import ScrollBarHelper from './util/scrollbar'
 import EventHandler from './dom/event-handler'
 import BaseComponent from './base-component'
 import SelectorEngine from './dom/selector-engine'
-import Manipulator from './dom/manipulator'
 import Backdrop from './util/backdrop'
 import FocusTrap from './util/focustrap'
 import { enableDismissTrigger } from './util/component-functions'
@@ -35,6 +33,8 @@ const EVENT_LOAD_DATA_API = `load${EVENT_KEY}${DATA_API_KEY}`
 const ESCAPE_KEY = 'Escape'
 
 const CLASS_NAME_SHOW = 'show'
+const CLASS_NAME_SHOWING = 'showing'
+const CLASS_NAME_HIDING = 'hiding'
 const CLASS_NAME_BACKDROP = 'offcanvas-backdrop'
 const OPEN_SELECTOR = '.offcanvas.show'
 
@@ -65,9 +65,8 @@ const DefaultType = {
 
 class Offcanvas extends BaseComponent {
   constructor(element, config) {
-    super(element)
+    super(element, config)
 
-    this._config = this._getConfig(config)
     this._isShown = false
     this._backdrop = this._initializeBackDrop()
     this._focustrap = this._initializeFocusTrap()
@@ -75,12 +74,16 @@ class Offcanvas extends BaseComponent {
   }
 
   // Getters
-  static get NAME() {
-    return NAME
-  }
-
   static get Default() {
     return Default
+  }
+
+  static get DefaultType() {
+    return DefaultType
+  }
+
+  static get NAME() {
+    return NAME
   }
 
   // Public
@@ -100,24 +103,23 @@ class Offcanvas extends BaseComponent {
     }
 
     this._isShown = true
-    this._element.style.visibility = 'visible'
-
     this._backdrop.show()
 
     if (!this._config.scroll) {
       new ScrollBarHelper().hide()
     }
 
-    this._element.removeAttribute('aria-hidden')
     this._element.setAttribute('aria-modal', true)
     this._element.setAttribute('role', 'dialog')
-    this._element.classList.add(CLASS_NAME_SHOW)
+    this._element.classList.add(CLASS_NAME_SHOWING)
 
     const completeCallBack = () => {
       if (!this._config.scroll) {
         this._focustrap.activate()
       }
 
+      this._element.classList.add(CLASS_NAME_SHOW)
+      this._element.classList.remove(CLASS_NAME_SHOWING)
       EventHandler.trigger(this._element, EVENT_SHOWN, { relatedTarget })
     }
 
@@ -138,14 +140,13 @@ class Offcanvas extends BaseComponent {
     this._focustrap.deactivate()
     this._element.blur()
     this._isShown = false
-    this._element.classList.remove(CLASS_NAME_SHOW)
+    this._element.classList.add(CLASS_NAME_HIDING)
     this._backdrop.hide()
 
     const completeCallback = () => {
-      this._element.setAttribute('aria-hidden', true)
+      this._element.classList.remove(CLASS_NAME_SHOW, CLASS_NAME_HIDING)
       this._element.removeAttribute('aria-modal')
       this._element.removeAttribute('role')
-      this._element.style.visibility = 'hidden'
 
       if (!this._config.scroll) {
         new ScrollBarHelper().reset()
@@ -164,16 +165,6 @@ class Offcanvas extends BaseComponent {
   }
 
   // Private
-  _getConfig(config) {
-    config = {
-      ...Default,
-      ...Manipulator.getDataAttributes(this._element),
-      ...(typeof config === 'object' ? config : {})
-    }
-    typeCheckConfig(NAME, config, DefaultType)
-    return config
-  }
-
   _initializeBackDrop() {
     return new Backdrop({
       className: CLASS_NAME_BACKDROP,
