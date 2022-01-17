@@ -223,6 +223,7 @@ class Tooltip extends BaseComponent {
     // todo v6 remove this OR make it optional
     if (this.tip) {
       this.tip.remove()
+      this.tip = null
     }
 
     const tip = this._getTipElement()
@@ -397,7 +398,7 @@ class Tooltip extends BaseComponent {
   }
 
   _getTitle() {
-    return this._config.title
+    return this._resolvePossibleFunction(this._config.title) || this._config.originalTitle
   }
 
   // Private
@@ -604,7 +605,6 @@ class Tooltip extends BaseComponent {
     }
 
     config.originalTitle = this._element.getAttribute('title') || ''
-    config.title = this._resolvePossibleFunction(config.title) || config.originalTitle
     if (typeof config.title === 'number') {
       config.title = config.title.toString()
     }
